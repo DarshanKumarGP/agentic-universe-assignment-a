@@ -100,7 +100,7 @@ def connect(path: str, vault: Vault) -> sqlite3.Connection:
         conn.execute("INSERT INTO meta(key, value) VALUES('key_fingerprint', ?)", (vault.fingerprint(),))
     elif row[0] != vault.fingerprint():
         raise WrongKeyError(
-            f"{path} was created with a different PII secret; set {'LEDGER_SECRET'} or restore "
+            f"{path} was created with a different PII secret; set LEDGER_SECRET or restore "
             f"{path}.key. Phones cannot be matched with a different key.")
     return conn
 

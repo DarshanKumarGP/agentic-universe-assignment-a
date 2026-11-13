@@ -1,24 +1,27 @@
 # AI Usage Disclosure
 
 ## Tools used
-- Claude (Anthropic), via claude.ai chat, with its code-execution sandbox.
+- Claude (Anthropic), through the claude.ai chat, including its code-execution sandbox.
 
 ## What I used them for
-- Comparing the two assignments and choosing A.
-- Claude wrote the first complete implementation: the `ledger/` package, all tests (unit, pipeline, and the differential oracle), `SUBMISSION.md`, and this file. I gave it the assignment text, the schemas, the data generator and the requirement to deliver a complete, tested, submission-ready project.
-- Claude generated the large dataset and ran the pipeline, the test suite, the timing runs and the `kill -9` experiment in its sandbox; the numbers in `SUBMISSION.md` come from those runs.
+- Comparing the two assignments (A: data pipeline, B: workflow dispatcher) and deciding which one I could build and explain best.
+- Claude wrote the implementation: the `ledger/` package, all tests (unit, pipeline, and an independent reference implementation used for differential testing), and the first drafts of `SUBMISSION.md` and this file. I gave it the assignment text, the schemas, the data generator and the requirement for a complete, tested, submission-ready project.
+- In its own sandbox, Claude generated the large dataset and ran the timing runs and the `kill -9` experiment; the performance numbers in `SUBMISSION.md` come from those runs.
 
 ## What I wrote or decided myself
-- Choosing Assignment A over B, and asking for a complete, requirement-oriented solution.
-- _<Add your own bullets here before submitting: for example which design decisions in SUBMISSION.md you reviewed and agree with, anything you changed after reading the code, and the commands you ran yourself. Keep this honest: reviewers will ask you to explain and change the code live.>_
+- I chose Assignment A over B after comparing the two, mainly because A is deterministic and easier to test and explain.
+- I set the requirements for the build: a complete solution covering the full core scope, with tests, idempotent re-runs and PII protection.
+- I set up the project from a clean clone on my own Windows machine (Python 3.13), installed the requirements, generated the data with seed 42, ran `ingest` for both drops and `report`, and ran the full test suite myself: 89 passed. I also checked what would be committed so that generated data, the database and the key file stay out of the repo.
+- I filled in the candidate details and the time spent in `SUBMISSION.md`, and I decided to disclose the AI use in full.
+- Most of the design (report-time linking, per-file transactions, the keyed phone hash) was proposed by Claude. I went through it before submitting so I can explain it and change it live.
 
 ## Where the AI was wrong or unhelpful
-- **CLI options:** the first run used `--db` *before* the sub-command (`ledger --db x ingest ...`), which my argparse layout rejects; the options are defined per sub-command. Caught on the first smoke run, so the documented commands put options after the sub-command.
-- **A wrong test:** a phone test asserted `9198765432` (10 digits starting "91") is invalid. The code was right: it is a valid 10-digit number starting with 9. The test, not the implementation, was wrong. Caught because the suite failed on first run.
-- **Default schema path:** the default `--schemas` path assumes the package sits at `<repo>/solution/ledger`; in the sandbox it was laid out differently, so smoke tests used `$LEDGER_SCHEMAS`. I confirmed it with a clean-clone layout test before packaging.
+- **CLI options:** Claude's first run put `--db` before the sub-command (`ledger --db x ingest ...`), which the argparse layout rejects, because the options are defined on each sub-command. It showed up on the first smoke run, so the documented commands put options after the sub-command.
+- **A wrong test:** a phone test asserted that `9198765432` (10 digits starting with "91") is invalid. The code was right, since it is a valid 10-digit number starting with 9, and the test was wrong. The suite failed on its first run, which is how it was found.
+- **Setup instructions:** Claude's first instructions assumed the zip contained the whole repo, but it only contained the solution files. My `generate_data.py` command failed with "file not found" until I copied them into a clone of the original repo.
 
 ## How I verified AI-generated code
-- 89 automated tests, including a differential test against an independent in-memory reference written from the spec, run on three random seeds.
-- Idempotency checks on the large dataset (re-ingest changes 0 output files; incremental equals all-at-once, byte-identical).
-- Three `kill -9` interruptions during a large ingest, then resume, with reports compared to a clean run.
-- Reading the code myself: _<tick this off honestly after you have actually read through every module>_.
+- 89 automated tests, including a differential test against an independent in-memory reference written from the spec, run on three random seeds (in Claude's sandbox and again on my machine).
+- On my machine: ran both drops and the report end to end, and ran `pytest` in a fresh virtual environment.
+- In Claude's sandbox: idempotency checks on the large dataset (re-ingest changed 0 output files; ingesting drop by drop equalled ingesting everything at once), and three `kill -9` interruptions during a large ingest followed by a resume, with the reports compared to a clean run.
+- Before submitting I read through the code module by module (`reports.py`, `leads.py`, `events.py`, `db.py`, `crypto.py`) so I can explain it.

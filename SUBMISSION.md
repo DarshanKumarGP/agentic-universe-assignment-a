@@ -3,12 +3,13 @@
 ## Candidate
 - **Name:** Darshan Kumar GP
 - **Assignment chosen:** A (Data): Interaction Ledger & Reporting Pipeline
-- **Time spent (honest estimate):** _<fill in your own number>_
+- **Time spent (honest estimate):** 4–5 hours
 
 ## How to run
 ```bash
 # from a clean clone
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate          # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
 python assignment-a-data/tools/generate_data.py --seed 42 --scale small --out data
@@ -19,7 +20,7 @@ python -m ledger ingest ../data/drop_2
 python -m ledger report --out ../reports      # writes the five files
 # ...or everything at once:  python -m ledger ingest ../data
 
-pytest                                        # 89 tests, ~3 s (run inside solution/)
+pytest                                        # 89 tests, a few seconds (run inside solution/)
 ```
 - Options go **after** the sub-command: `--db PATH` (default `./ledger.db`, or `$LEDGER_DB`), `--schemas DIR`
   (default `assignment-a-data/schemas`), `-q`.
@@ -106,7 +107,7 @@ Event dedupe uses `PRIMARY KEY` + `INSERT OR IGNORE`, so it is correct across fi
 - **Not handled (known):** key rotation; schema evolution/back-fills of *corrected* files (would need an explicit "supersede file" flow); lead CSVs are read fully into memory (fine for ~100k rows; events are streamed); SQLite is single-writer.
 
 ## Testing
-- `pytest` (89 tests, ~3 s):
+- `pytest` (89 tests, a few seconds; also run on Windows with Python 3.13):
   - unit: phone (valid/invalid/prefix rules), dates (4 formats, day-first, impossible dates), decimals, enums, header normalisation, timestamps (Z / offset / naive=IST);
   - domain: effective disposition (latest by `occurred_at`, override beats set, tie-break) and bucket precedence;
   - pipeline on hand-made drops: exact counts for every `data_quality.json` key, row numbering with blank rows, merge semantics, defaults, event-before-lead, unknown dispositions, idempotent re-ingest, incremental == all-at-once, crash rollback, append-only triggers, **no plaintext PII in the DB file**, report format;
